@@ -10,7 +10,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
-
+// Para generar el token
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class UserController extends AbstractController
 {
@@ -21,13 +23,13 @@ class UserController extends AbstractController
     }
 
     #[Route('/user/registration', methods: ['POST'])]
-    public function index(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    public function registration(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
         if(!isset($data['nombre'])) {
             return $this->json (['estado' => 'error',
-                                'mensaje'=>'El campo nombre es obligatorio'
+                                'mensaje' => 'El campo nombre es obligatorio'
                                 ], 400);
         }
 
@@ -62,5 +64,54 @@ class UserController extends AbstractController
         return $this->json(['estado' => 'ok',
                             'mensaje' => 'Se creó el registro exitosamente'
                             ], Response::HTTP_CREATED); // 201
+    }
+
+    #[Route('/user/login', methods: ['POST'])]
+    public function login(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if(!isset($data['email'])) {
+            return $this->json (['estado' => 'error',
+                                'mensaje' => 'El campo correo es obligatorio'
+                                ], 400);
+        }
+
+        if(!isset($data['clave'])) {
+            return $this->json (['estado' => 'error',
+                                'mensaje' => 'El campo clave es obligatorio'
+                                ], 400);
+        }
+        
+        $user = $this->em->getRepository(User::class)->findOneBy(['email' => $data['email']]);
+
+        if(!$user) {
+            return $this->json(['estado' => 'error',
+                                'mensaje' => 'Las credenciales ingresadas no son válidas'
+                                ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if($passwordHasher->isPasswordValid($user, $data['clave'])) {
+            $payload = [
+                        // URL de la aplicación
+                        'iss' => "http://" . dirname ($_SERVER['SERVER_NAME'] . "" . $_SERVER['PHP_SELF']) . "/",
+                        // Identificador único del usuario
+                        'aud' => $user->getId(),
+                        // fecha cuando fue creado en formato timestamp
+                        'iat' => time(),
+                        // fecha de expiración
+                        'exp' => strtotime('+2 minute', time())
+                        ];
+
+            $jwt = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS512');
+
+            return $this->json(['nombre' => $user->getNombre(),
+                                'token' => $jwt
+                                ]);
+        } else {
+            return $this->json (['estado' => 'error',
+                                'mensaje' => 'Las credenciales ingresadas no son válidas'
+                                ], Response::HTTP_BAD_REQUEST); //400
+        }
     }
 }
