@@ -5,8 +5,9 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Entity\User;
+
 use Symfony\Component\HttpFoundation\Request;
+use App\Entity\User;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-class UserController extends AbstractController
+class AccessController extends AbstractController
 {
     private $em;
 
@@ -22,7 +23,7 @@ class UserController extends AbstractController
         $this->em = $em;
     }
 
-    #[Route('/user/registration', methods: ['POST'])]
+    #[Route('api/user/registration', methods: ['POST'])]
     public function registration(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -66,7 +67,7 @@ class UserController extends AbstractController
                             ], Response::HTTP_CREATED); // 201
     }
 
-    #[Route('/user/login', methods: ['POST'])]
+    #[Route('/api/user/login', methods: ['POST'])]
     public function login(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -100,7 +101,8 @@ class UserController extends AbstractController
                         // fecha cuando fue creado en formato timestamp
                         'iat' => time(),
                         // fecha de expiración
-                        'exp' => strtotime('+2 minute', time())
+                        //'exp' => strtotime('+2 minute', time())
+                        'exp' => strtotime('+1 minute', time())
                         ];
 
             $jwt = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS512');
