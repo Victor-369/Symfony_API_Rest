@@ -11,6 +11,8 @@ use App\Entity\User;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Serializer\SerializerInterface;
+
 // Para generar el token
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -24,7 +26,7 @@ class AccessController extends AbstractController
     }
 
     #[Route('api/user/registration', methods: ['POST'])]
-    public function registration(Request $request, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    public function registration(Request $request, UserPasswordHasherInterface $passwordHasher, SerializerInterface $serializer): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -47,7 +49,7 @@ class AccessController extends AbstractController
         }
 
         $existe = $this->em->getRepository(User::class)->findOneBy(['email' => $data['email']]);
-        
+
         if($existe) {
             return $this->json(['estado' => 'error',
                                 'mensaje' => "El email {$data['email']} ya está siendo usado por otro usuario"], 400);
@@ -58,6 +60,9 @@ class AccessController extends AbstractController
         $entity->setEmail($data['email']);
         $entity->setPassword($passwordHasher->hashPassword($entity, $data['clave']));
         $entity->setRoles(['ROLE_USER']);
+
+        $fechaHora = \DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', time()));
+        $entity->setCreatedAt($fechaHora);
         
         $this->em->persist($entity);
         $this->em->flush();
