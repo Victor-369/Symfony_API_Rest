@@ -101,7 +101,6 @@ class AccessController extends AbstractController
                         // fecha cuando fue creado en formato timestamp
                         'iat' => time(),
                         // fecha de expiración
-                        //'exp' => strtotime('+2 minute', time())
                         'exp' => strtotime('+1 minute', time())
                         ];
 
