@@ -56,4 +56,44 @@ class ProductController extends AbstractController {
                                 ], 200);
         }
     }
+
+    #[Route('api/products', methods: ['POST'])]
+    public function product_create(Request $request): JsonResponse
+    {
+        $esValido = Utilidades::checkToken($this->em, $request);
+
+        if(!$esValido) {
+            return $this->json(['estado' => 'error',
+                                'mensaje' => 'Las credenciales ingresadas no son válidas'
+                            ], Response::HTTP_BAD_REQUEST);
+        } else {
+            $data = json_decode($request->getContent(), true);
+
+            if(!$data['nombre']) {
+                return $this->json (['estado' => 'error',
+                                    'mensaje' => 'El campo nombre es obligatorio'
+                                    ], 400);
+            }
+
+            $existe = $this->em->getRepository(Product::class)->findOneBy(['nombre' => $data['nombre']]);
+            
+            if($existe) {
+                return $this->json(['estado' => 'error',
+                                    'mensaje' => "El producto '{$data['nombre']}' ya existe"], 400);
+            }
+
+            $entity = new Product();
+            $entity->setNombre($data['nombre']);
+
+            $fechaHora = \DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', time()));
+            $entity->setCreatedAt($fechaHora);
+            
+            $this->em->persist($entity);
+            $this->em->flush();
+    
+            return $this->json(['estado' => 'Ok',
+                                'mensaje' => 'Producto creado'
+                                ], 200);
+        }
+    }
 }
