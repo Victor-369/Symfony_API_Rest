@@ -23,6 +23,9 @@ class Product
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $deletedAt = null;
 
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $modifiedAt = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -60,6 +63,18 @@ class Product
     public function setDeletedAt(?\DateTimeInterface $deletedAt): static
     {
         $this->deletedAt = $deletedAt;
+
+        return $this;
+    }
+
+    public function getModifiedAt(): ?\DateTimeInterface
+    {
+        return $this->modifiedAt;
+    }
+
+    public function setModifiedAt(?\DateTimeInterface $modifiedAt): static
+    {
+        $this->modifiedAt = $modifiedAt;
 
         return $this;
     }

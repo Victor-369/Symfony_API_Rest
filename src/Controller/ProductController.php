@@ -96,4 +96,72 @@ class ProductController extends AbstractController {
                                 ], 200);
         }
     }
+
+    #[Route('api/products/{id}', methods: ['PUT'])]
+    public function product_modify(Request $request, int $id): JsonResponse
+    {
+        $esValido = Utilidades::checkToken($this->em, $request);
+
+        if(!$esValido) {
+            return $this->json(['estado' => 'error',
+                                'mensaje' => 'Las credenciales ingresadas no son válidas'
+                            ], Response::HTTP_BAD_REQUEST);
+        } else {
+            $data = json_decode($request->getContent(), true);
+
+            if(!$data['nombre']) {
+                return $this->json (['estado' => 'error',
+                                    'mensaje' => 'El campo nombre es obligatorio'
+                                    ], 400);
+            }
+
+            $producto = $this->em->getRepository(Product::class)->findOneBy(['id' => $id]);
+            
+            if(!$producto) {
+                return $this->json(['estado' => 'error',
+                                    'mensaje' => "El producto con id '$id' no existe"], 400);
+            }
+
+            $producto->setNombre($data['nombre']);
+            
+            $fechaHora = \DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', time()));
+            $producto->setModifiedAt($fechaHora);
+            
+            $this->em->persist($producto);
+            $this->em->flush();
+    
+            return $this->json(['estado' => 'Ok',
+                                'mensaje' => 'Producto modificado'
+                                ], 200);
+        }
+    }
+
+    #[Route('api/products/{id}', methods: ['DELETE'])]
+    public function product_delete(Request $request, int $id): JsonResponse
+    {
+        $esValido = Utilidades::checkToken($this->em, $request);
+
+        if(!$esValido) {
+            return $this->json(['estado' => 'error',
+                                'mensaje' => 'Las credenciales ingresadas no son válidas'
+                            ], Response::HTTP_BAD_REQUEST);
+        } else {
+            $producto = $this->em->getRepository(Product::class)->findOneBy(['id' => $id]);
+            
+            if(!$producto) {
+                return $this->json(['estado' => 'error',
+                                    'mensaje' => "El producto con id '$id' no existe"], 400);
+            }
+            
+            $fechaHora = \DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', time()));
+            $producto->setDeletedAt($fechaHora);
+            
+            $this->em->persist($producto);
+            $this->em->flush();
+    
+            return $this->json(['estado' => 'Ok',
+                                'mensaje' => 'Producto eliminado'
+                                ], 200);
+        }
+    }
 }
