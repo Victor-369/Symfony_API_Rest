@@ -106,7 +106,7 @@ class AccessController extends AbstractController
                         // fecha cuando fue creado en formato timestamp
                         'iat' => time(),
                         // fecha de expiración
-                        'exp' => strtotime('+1 minute', time())
+                        'exp' => strtotime('+5 minute', time())
                         ];
 
             $jwt = JWT::encode($payload, $_ENV['JWT_SECRET'], 'HS512');

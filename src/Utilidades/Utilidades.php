@@ -24,5 +24,22 @@ class Utilidades {
     
         return $esValido;
     }
+
+    public static function getUserIdToken(EntityManagerInterface $emi, Request $request): int {
+        // Decodificar el token
+        $apiToken = $request->headers->get('X-AUTH-TOKEN');
+        $decode = JWT::decode($apiToken, new Key($_ENV['JWT_SECRET'], 'HS512'));
+        
+        // Comprobar si usuario existe
+        $user = $emi->getRepository(User::class)->findOneBy(['id' => $decode->aud]);
+    
+        if(!$user) {
+            $userId = -1;
+        } else {
+            $userId = $user->getId();
+        }
+    
+        return $userId;
+    }
 }
 

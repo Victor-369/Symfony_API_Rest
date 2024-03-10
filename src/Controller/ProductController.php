@@ -122,6 +122,11 @@ class ProductController extends AbstractController {
                                     'mensaje' => "El producto con id '$id' no existe"], 400);
             }
 
+            if($producto->getDeletedAt()) {
+                return $this->json(['estado' => 'error',
+                                    'mensaje' => "El producto con id '$id' está borrado. No se puede modificar"], 400);
+            }
+
             $producto->setNombre($data['nombre']);
             
             $fechaHora = \DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', time()));
@@ -151,6 +156,11 @@ class ProductController extends AbstractController {
             if(!$producto) {
                 return $this->json(['estado' => 'error',
                                     'mensaje' => "El producto con id '$id' no existe"], 400);
+            }
+
+            if($producto->getDeletedAt()) {
+                return $this->json(['estado' => 'error',
+                                    'mensaje' => "El producto con id '$id' ya estaba borrado"], 400);
             }
             
             $fechaHora = \DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', time()));
