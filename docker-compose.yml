@@ -1,0 +1,16 @@
+version: '3.5'
+
+services:
+  maria_db:
+    image: mariadb:11.4-rc-jammy
+    restart: always
+    container_name: mariadb_api
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_api:/var/lib/mysql
+
+volumes:
+  mariadb_api:

@@ -21,7 +21,7 @@ class CommentController extends AbstractController
         $this->em = $em;
     }
 
-    // Recoge todos los comentarios del usuario logueado.
+    // Collects all comments from the logged in user.
     #[Route('api/comments', methods: ['GET'])]
     public function comment_list(Request $request, SerializerInterface $serializer): JsonResponse
     {
@@ -42,7 +42,7 @@ class CommentController extends AbstractController
         }
     }
 
-    // Recoge todos los comentarios del usuario logueado, para un producto específico.
+    // Collects all comments from the logged in user, for a specific product.
     #[Route('api/comments/product/{id}', methods: ['GET'])]
     public function comments_listByProduct(int $id, Request $request, SerializerInterface $serializer): JsonResponse
     {
@@ -63,7 +63,7 @@ class CommentController extends AbstractController
         }
     }
 
-    // Recoge todos los comentarios de un usuario específico.
+    // Collects all comments from a specific user.
     #[Route('api/comments/user/{id}', methods: ['GET'])]
     public function comments_listByUser(int $id, Request $request, SerializerInterface $serializer): JsonResponse
     {
@@ -90,8 +90,8 @@ class CommentController extends AbstractController
         }
     }
 
-    // Crea el comentario para un producto específico.
-    #[Route('api/comments/products/{id}', methods: ['POST'])]
+    // Create comment for a specific product.
+    #[Route('api/comments/product/{id}', methods: ['POST'])]
     public function comments_create(int $id, Request $request): JsonResponse
     {
         $esValido = Utilidades::checkToken($this->em, $request);
@@ -109,7 +109,7 @@ class CommentController extends AbstractController
                                     ], 400);
             }
 
-            // Comprueba que exista el producto
+            // Checks that product exists.
             $existe = $this->em->getRepository(Product::class)->findOneBy(['id' => $id]);            
             if(!$existe) {
                 return $this->json(['estado' => 'error',
@@ -130,6 +130,40 @@ class CommentController extends AbstractController
     
             return $this->json(['estado' => 'Ok',
                                 'mensaje' => 'Comentario creado'
+                                ], 200);
+        }
+    }
+
+    #[Route('api/comments/{id}', methods: ['DELETE'])]
+    public function product_delete(Request $request, int $id): JsonResponse
+    {
+        $esValido = Utilidades::checkToken($this->em, $request);
+
+        if(!$esValido) {
+            return $this->json(['estado' => 'error',
+                                'mensaje' => 'Las credenciales ingresadas no son válidas'
+                            ], Response::HTTP_BAD_REQUEST);
+        } else {
+            $comentario = $this->em->getRepository(Comment::class)->findOneBy(['id' => $id]);
+            
+            if(!$comentario) {
+                return $this->json(['estado' => 'error',
+                                    'mensaje' => "El comentario con id '$id' no existe"], 400);
+            }
+
+            if($comentario->getDeletedAt()) {
+                return $this->json(['estado' => 'error',
+                                    'mensaje' => "El comentario con id '$id' ya estaba borrado"], 400);
+            }
+            
+            $fechaHora = \DateTime::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', time()));
+            $comentario->setDeletedAt($fechaHora);
+            
+            $this->em->persist($comentario);
+            $this->em->flush();
+    
+            return $this->json(['estado' => 'Ok',
+                                'mensaje' => 'Comentario eliminado'
                                 ], 200);
         }
     }
